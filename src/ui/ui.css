@@ -43,6 +43,7 @@
 .detail-close { flex: none; border: 1px solid var(--line); background: #fff; color: var(--ink); border-radius: 10px; padding: 6px 14px; font-weight: 600; cursor: pointer; }
 .detail-close:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .detail-body { overflow-y: auto; overscroll-behavior: contain; padding: 8px 20px 24px; }
+.detail-body:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
 .detail-section h3 { margin: 18px 0 6px; font-size: 1rem; }
 .detail-section p { margin: 0 0 10px; overflow-wrap: anywhere; }
 .detail-table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }

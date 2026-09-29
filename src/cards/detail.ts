@@ -23,10 +23,17 @@ const lonOf = (chart: Chart, id: BodyId) => chart.bodies.find((b) => b.id === id
 const houseNum = (chart: Chart, lon: number) => (chart.houses ? houseOf(lon, chart.houses.cusps) : null);
 const head = (label: string, sign: SignId) => `${label} · ${SIGNS[sign].ko}`;
 
-function placement(chart: Chart, id: BodyId): DetailSection {
+/** 천체 한 자리의 해설. rich면 조합 문장 뒤에 행성·별자리·하우스 해설 문단을 잇는다(연애·일 카드용). */
+function placement(chart: Chart, id: BodyId, opts: { lead?: string; rich?: boolean } = {}): DetailSection {
   const lon = lonOf(chart, id);
   const sign = signOf(lon);
-  return { heading: head(PLANETS[id].ko, sign), paragraphs: placementText(id, sign, houseNum(chart, lon)) };
+  const house = houseNum(chart, lon);
+  const paragraphs = [...(opts.lead ? [opts.lead] : []), ...placementText(id, sign, house)];
+  if (opts.rich) {
+    paragraphs.push(PLANETS[id].body, SIGNS[sign].body);
+    if (house !== null) paragraphs.push(HOUSES[house - 1].body);
+  }
+  return { heading: head(PLANETS[id].ko, sign), paragraphs };
 }
 
 export function buildDetail(card: CardData, chart: Chart): Detail {
@@ -39,10 +46,10 @@ export function buildDetail(card: CardData, chart: Chart): Detail {
       return {
         title,
         sections: [
-          { heading: head('태양', sun), paragraphs: [NATAL.sun[sun]] },
-          { heading: head('달', moon), paragraphs: [NATAL.moon[moon]] },
+          { heading: head('태양', sun), paragraphs: [card.sunLine, NATAL.sun[sun]] },
+          { heading: head('달', moon), paragraphs: [card.moonLine, NATAL.moon[moon]] },
           asc
-            ? { heading: head('상승궁', asc), paragraphs: ascText(asc) }
+            ? { heading: head('상승궁', asc), paragraphs: [...(card.ascLine ? [card.ascLine] : []), ...ascText(asc)] }
             : { heading: '상승궁', paragraphs: ['태어난 시각을 넣으면 상승궁 해설이 나옵니다.'] },
         ],
       };
@@ -50,15 +57,21 @@ export function buildDetail(card: CardData, chart: Chart): Detail {
     case 'traits': {
       const s = SIGNS[card.sign.id];
       const meta = `원소 ${ELEMENT_KO[ELEMENT[s.id]]} · 양태 ${MODALITY_KO[MODALITY[s.id]]} · 지배 행성 ${PLANETS[s.ruler].ko} · 핵심어 ${s.keywords.join('·')}`;
-      return { title, sections: [{ heading: `태양 · ${s.ko}`, paragraphs: [meta, s.body] }] };
+      return {
+        title,
+        sections: [
+          { heading: `태양 · ${s.ko}`, paragraphs: [card.tags.map((t) => `#${t}`).join(' '), meta, s.body] },
+          { heading: '강점과 약점', paragraphs: [`강점: ${card.strength}`, `약점: ${card.weakness}`] },
+        ],
+      };
     }
     case 'love': {
       const hit = chart.aspects.find((a) => (a.a === 'venus' && a.b === 'mars') || (a.a === 'mars' && a.b === 'venus'));
       return {
         title,
         sections: [
-          placement(chart, 'venus'),
-          placement(chart, 'mars'),
+          placement(chart, 'venus', { lead: card.venusLine, rich: true }),
+          placement(chart, 'mars', { lead: card.marsLine, rich: true }),
           {
             heading: '금성과 화성 사이',
             paragraphs: [hit ? aspectText(hit, { mode: 'natal' }) : '금성과 화성 사이에는 주요 각도가 없습니다.'],
@@ -70,12 +83,12 @@ export function buildDetail(card: CardData, chart: Chart): Detail {
       let primary: DetailSection;
       if (chart.houses) {
         const mc = signOf(chart.houses.mc);
-        primary = { heading: head('중천(MC)', mc), paragraphs: [SIGNS[mc].body, HOUSES[9].body] };
+        primary = { heading: head('중천(MC)', mc), paragraphs: [card.primary.line, SIGNS[mc].body, HOUSES[9].body] };
       } else {
-        const jup = signOf(lonOf(chart, 'jupiter'));
-        primary = { heading: head('목성', jup), paragraphs: placementText('jupiter', jup, null) };
+        // 시각을 모르면 하우스가 없으니 목성은 행성·별자리 해설까지만 붙는다
+        primary = placement(chart, 'jupiter', { lead: card.primary.line, rich: true });
       }
-      return { title, sections: [primary, placement(chart, 'saturn')] };
+      return { title, sections: [primary, placement(chart, 'saturn', { lead: card.saturn.line, rich: true })] };
     }
     case 'elements': {
       const sections: DetailSection[] = ELEMENT_ORDER.map((e) => {
@@ -87,8 +100,14 @@ export function buildDetail(card: CardData, chart: Chart): Detail {
       const top = card.top.slice(0, 2);
       sections.push({
         heading: `가장 강한 원소 · ${top.map((e) => ELEMENT_KO[e]).join('·')}`,
-        paragraphs: top.map((e) => ELEMENT_DETAIL[e]),
+        paragraphs: [card.line, ...top.map((e) => ELEMENT_DETAIL[e])],
       });
+      // 가장 약한 원소: top 밖에서 가장 적은 것, 같으면 불→흙→공기→물 순서로 앞
+      const rest = ELEMENT_ORDER.filter((e) => !card.top.includes(e));
+      if (rest.length) {
+        const weak = rest.reduce((a, b) => (card.counts[b] < card.counts[a] ? b : a));
+        sections.push({ heading: `가장 약한 원소 · ${ELEMENT_KO[weak]}`, paragraphs: [ELEMENT_DETAIL[weak]] });
+      }
       return { title, sections };
     }
     case 'chart': {

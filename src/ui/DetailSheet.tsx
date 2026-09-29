@@ -6,6 +6,8 @@ export function DetailSheet({ detail, onClose }: { detail: Detail; onClose: () =
   const titleId = useId();
   const panel = useRef<HTMLDivElement>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
+  // 배경에서 누르기 시작해 배경에서 뗀 경우만 닫는다(본문을 끌다가 밖에서 떼면 닫지 않음)
+  const downOnBackdrop = useRef(false);
   const close = useRef(onClose);
   useEffect(() => { close.current = onClose; }, [onClose]);
 
@@ -38,13 +40,20 @@ export function DetailSheet({ detail, onClose }: { detail: Detail; onClose: () =
   }
 
   return (
-    <div className="detail-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="detail-backdrop"
+      onPointerDown={(e) => { downOnBackdrop.current = e.target === e.currentTarget; }}
+      onClick={(e) => {
+        const ok = downOnBackdrop.current && e.target === e.currentTarget;
+        downOnBackdrop.current = false;
+        if (ok) onClose();
+      }}>
       <div ref={panel} className="detail-panel" role="dialog" aria-modal="true" aria-labelledby={titleId} onKeyDown={trapTab}>
         <div className="detail-head">
           <h2 id={titleId}>{detail.title}</h2>
           <button ref={closeBtn} type="button" className="detail-close" onClick={onClose}>닫기</button>
         </div>
-        <div className="detail-body">
+        {/* 키보드로도 본문을 스크롤할 수 있게 초점을 받는다 */}
+        <div className="detail-body" tabIndex={0} role="region" aria-labelledby={titleId}>
           {detail.sections.map((s, i) => (
             <section key={i} className="detail-section">
               <h3>{s.heading}</h3>
