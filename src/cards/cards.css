@@ -7,21 +7,25 @@
 .card-top { display: flex; flex-direction: column; gap: 12px; }
 .card-no { font-size: 34px; font-weight: 600; opacity: .6; letter-spacing: .08em; }
 .card-title { margin: 0; font-size: 88px; font-weight: 800; letter-spacing: -.02em; }
-.card-body { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 48px; }
-.card-foot { display: flex; justify-content: space-between; font-size: 36px; font-weight: 600; opacity: .7; }
+.card-body { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 36px; }
+.card-foot { display: flex; justify-content: space-between; gap: 24px; font-size: 36px; font-weight: 600; opacity: .7; }
 .hero { text-align: center; }
+.hero-name.xl { font-size: 140px; line-height: 1.1; }
+.glyph.pair { display: block; font-size: 180px; line-height: 1.05; margin: 0; }
+.card-foot > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.card-foot .brand { flex: none; }
 .glyph { font-variant-emoji: text; margin-right: 16px; }
-.glyph.big { display: block; font-size: 260px; line-height: 1.1; margin: 0; }
-.hero-name { margin: 0; font-size: 72px; font-weight: 800; }
-.panel { background: rgba(255, 255, 255, .55); border-radius: 48px; padding: 56px 60px; display: flex; flex-direction: column; gap: 18px; }
-.sign-row { display: flex; justify-content: space-between; align-items: baseline; gap: 24px; font-size: 44px; font-weight: 700; }
+.glyph.big { display: block; font-size: 220px; line-height: 1.05; margin: 0; }
+.hero-name { word-break: keep-all; overflow-wrap: anywhere; margin: 0; font-size: 72px; font-weight: 800; }
+.panel { background: rgba(255, 255, 255, .55); border-radius: 48px; padding: 44px 52px; display: flex; flex-direction: column; gap: 12px; }
+.sign-row { word-break: keep-all; overflow-wrap: anywhere; display: flex; justify-content: space-between; align-items: baseline; gap: 24px; font-size: 44px; font-weight: 700; }
 .sign-label { font-size: 34px; font-weight: 600; opacity: .7; }
 .sign-missing { font-size: 34px; opacity: .6; }
-.line { margin: 0 0 20px; font-size: 42px; line-height: 1.5; font-weight: 500; }
+.line { word-break: keep-all; overflow-wrap: anywhere; text-wrap: pretty; margin: 0 0 14px; font-size: 42px; line-height: 1.5; font-weight: 500; }
 .line.strong { font-weight: 700; margin-top: 24px; }
 .kicker { margin: 0; font-size: 34px; font-weight: 700; opacity: .7; }
 .tags { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
-.tag { background: rgba(255, 255, 255, .7); border-radius: 999px; padding: 18px 36px; font-size: 48px; font-weight: 700; }
+.tag { word-break: keep-all; overflow-wrap: anywhere; background: rgba(255, 255, 255, .7); border-radius: 999px; padding: 18px 36px; font-size: 48px; font-weight: 700; }
 .bar-row { display: grid; grid-template-columns: 110px 1fr 60px; align-items: center; gap: 24px; font-size: 44px; font-weight: 700; }
 .bar-track { height: 36px; background: rgba(43, 45, 66, .1); border-radius: 18px; overflow: hidden; }
 .bar-fill { display: block; height: 100%; border-radius: 18px; }
@@ -38,4 +42,4 @@
 .static-wheel .asp { stroke-width: 1.6; opacity: .75; } .static-wheel .asp.soft { stroke: #3a7bd5; } .static-wheel .asp.hard { stroke: #e0605a; } .static-wheel .asp.blend { stroke: #8a6fd6; }
 .static-wheel .pl circle { fill: #fff; stroke: rgba(43, 45, 66, .5); }
 .static-wheel .tick { stroke: rgba(43, 45, 66, .5); }
-.static-wheel .axis { font-size: 16px; font-weight: 700; }
+.static-wheel .axis { font-size: 20px; font-weight: 700; }

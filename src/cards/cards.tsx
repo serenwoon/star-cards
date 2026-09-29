@@ -1,6 +1,7 @@
 import type { CardData, CardSet, SignRef } from './model';
 import { ELEMENT_ORDER } from './model';
 import { ELEMENT_KO } from '../content/signs';
+import { PLANETS } from '../content/planets';
 import { CardFrame } from './CardFrame';
 import { StaticWheel } from './StaticWheel';
 
@@ -46,24 +47,35 @@ function Content({ card }: { card: CardData }) {
       );
     case 'love':
       return (
+        <>
+        <div className="hero">
+          <span className="glyph pair">{PLANETS.venus.glyph}{PLANETS.mars.glyph}</span>
+          <p className="hero-name">{card.venus.ko} · {card.mars.ko}</p>
+        </div>
         <div className="panel">
           <Sign label="금성 · 끌리는 것" sign={card.venus} />
           <p className="line">{card.venusLine}</p>
           <Sign label="화성 · 다가가는 방식" sign={card.mars} />
           <p className="line">{card.marsLine}</p>
         </div>
+        </>
       );
     case 'work':
       return (
+        <>
+        <div className="hero"><span className="glyph big">{card.primary.sign.glyph}</span><p className="hero-name">{card.primary.sign.ko}</p></div>
         <div className="panel">
           <Sign label={card.primary.label === 'MC' ? 'MC · 가고 싶은 방향' : '목성 · 기회가 오는 길'} sign={card.primary.sign} />
           <p className="line">{card.primary.line}</p>
           <Sign label="토성 · 버티는 힘" sign={card.saturn.sign} />
           <p className="line">{card.saturn.line}</p>
         </div>
+        </>
       );
     case 'elements':
       return (
+        <>
+        <div className="hero"><p className="hero-name xl">{card.top.slice(0, 2).map((e) => ELEMENT_KO[e]).join(' · ')}</p></div>
         <div className="panel">
           {ELEMENT_ORDER.map((e) => (
             <div key={e} className={`bar-row ${card.top.slice(0, 2).includes(e) ? 'top' : ''}`}>
@@ -74,6 +86,7 @@ function Content({ card }: { card: CardData }) {
           ))}
           <p className="line strong">{card.line}</p>
         </div>
+        </>
       );
     case 'chart':
       return <div className="wheel-wrap"><StaticWheel chart={card.chart} size={920} /></div>;

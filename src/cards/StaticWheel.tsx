@@ -51,8 +51,8 @@ export function StaticWheel({ chart, size }: { chart: Chart; size: number }) {
         );
       })}
       {chart.houses && (() => {
-        const [ax, ay] = toXY(chart.houses.asc, Z_OUT + 12, asc);
-        const [mx, my] = toXY(chart.houses.mc, Z_OUT + 12, asc);
+        const [ax, ay] = toXY(chart.houses.asc, 306, asc);
+        const [mx, my] = toXY(chart.houses.mc, 306, asc);
         return (
           <>
             <text x={ax} y={ay} className="axis">AC</text>
