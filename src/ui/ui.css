@@ -23,7 +23,7 @@
   .deck { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 16px; padding-bottom: 12px; }
   .deck-item { flex: 0 0 82%; scroll-snap-align: center; }
 }
-.scaled { position: relative; width: 100%; overflow: hidden; border-radius: 16px; box-shadow: 0 6px 24px rgba(43, 45, 66, .12); }
+.scaled { position: relative; aspect-ratio: 9 / 16; width: 100%; overflow: hidden; border-radius: 16px; box-shadow: 0 6px 24px rgba(43, 45, 66, .12); }
 .scaled-inner { position: absolute; top: 0; left: 0; transform-origin: top left; }
 .foot { margin-top: 40px; font-size: 13px; color: var(--muted); }
 
