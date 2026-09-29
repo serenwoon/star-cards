@@ -7,11 +7,11 @@ export const TRAITS: Record<SignId, Traits> = {
   aries: {
     tags: ['직진', '추진력', '도전'],
     strength: '망설이는 사람들 앞에서 첫걸음을 떼 줄 수 있어요',
-    weakness: '흥미가 식으면 마무리가 조금 느슨해지기 쉬워요',
+    weakness: '마음이 급해 말이 먼저 나갈 때가 있어요',
   },
   taurus: {
     tags: ['안정감', '미식가', '끈기'],
-    strength: '한번 정한 일은 끝까지 해내는 끈기가 있어요',
+    strength: '흔들리지 않는 꾸준함으로 주변에 안정감을 줘요',
     weakness: '계획이 갑자기 바뀌면 적응하는 데 시간이 걸려요',
   },
   gemini: {
@@ -32,7 +32,7 @@ export const TRAITS: Record<SignId, Traits> = {
   virgo: {
     tags: ['꼼꼼함', '계획표', '정리'],
     strength: '남들이 놓친 실수를 먼저 찾아 바로잡을 수 있어요',
-    weakness: '스스로에게 기준이 높아 자주 지치기 쉬워요',
+    weakness: '스스로에게 엄격해서 쉽게 지칠 때가 있어요',
   },
   libra: {
     tags: ['균형', '매너', '조화'],
@@ -40,8 +40,8 @@ export const TRAITS: Record<SignId, Traits> = {
     weakness: '갈등이 싫어서 결정을 미루게 될 때가 있어요',
   },
   scorpio: {
-    tags: ['몰입', '통찰', '비밀'],
-    strength: '끝까지 파고드는 집중력으로 본질을 찾아내요',
+    tags: ['몰입', '통찰', '신비'],
+    strength: '사람과 일의 속사정을 꿰뚫어 보는 눈이 있어요',
     weakness: '쉽게 믿지 못해 혼자 오래 곱씹을 때가 있어요',
   },
   sagittarius: {
