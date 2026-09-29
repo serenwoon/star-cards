@@ -26,3 +26,9 @@
 .scaled { position: relative; width: 100%; overflow: hidden; border-radius: 16px; box-shadow: 0 6px 24px rgba(43, 45, 66, .12); }
 .scaled-inner { position: absolute; top: 0; left: 0; transform-origin: top left; }
 .foot { margin-top: 40px; font-size: 13px; color: var(--muted); }
+
+.deck-tools { display: flex; gap: 8px; align-items: center; margin-top: 24px; }
+.deck-tools button, .card-actions button { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 8px 14px; font-weight: 600; cursor: pointer; }
+.deck-tools button:disabled, .card-actions button:disabled { opacity: .5; cursor: default; }
+.card-actions { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+.err { color: #c0392b; font-size: 13px; }
