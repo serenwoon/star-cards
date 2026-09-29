@@ -12,7 +12,12 @@ export function CardActions({ index, title, resetKey, getNode }: { index: number
     try {
       if (mode === 'share' && file) {
         // 제스처 만료 뒤 새 탭: 만들어 둔 파일을 바로 공유
-        try { await shareFiles([file], title); } catch (e) { if (classifyShareError(e) !== 'abort') throw e; }
+        try {
+          await shareFiles([file], title);
+        } catch (e) {
+          if (classifyShareError(e) === 'abort') { setState('idle'); return; }
+          downloadBlob(file, file.name);
+        }
         setCached(null);
         setState('idle');
         return;
