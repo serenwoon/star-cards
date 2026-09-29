@@ -3,6 +3,8 @@ import { computeChart } from '../src/astro/chart';
 import { buildCards } from '../src/cards/model';
 import { SUN_LINE, ASC_LINE } from '../src/content/cards/big3';
 import { JUPITER_LINE, MC_LINE } from '../src/content/cards/lines';
+import { tieLine } from '../src/content/cards/elements';
+import type { Element } from '../src/astro/zodiac';
 
 const seoul = { lat: 37.5665, lon: 126.978, tz: 'Asia/Seoul', system: 'placidus' as const };
 const known = computeChart({ date: '1990-05-15', time: '14:30', ...seoul });
@@ -53,5 +55,42 @@ describe('buildCards', () => {
   });
   it('이름이 빈 문자열이면 null', () => {
     expect(buildCards(known, '  ').name).toBeNull();
+  });
+});
+
+const LON: Record<Element, number> = { fire: 15, earth: 45, air: 75, water: 105 };
+function withElements(plan: Element[]) {
+  const ids = known.bodies.filter((b) => b.id !== 'node');
+  return {
+    ...known,
+    bodies: known.bodies.map((b) => {
+      const i = ids.findIndex((x) => x.id === b.id);
+      return i < 0 ? b : { ...b, lon: LON[plan[i]] };
+    }),
+  };
+}
+const rep = (e: Element, n: number) => Array<Element>(n).fill(e);
+
+describe('원소 동점', () => {
+  it('2자 동점: 불 3 / 흙 3 / 공기 2 / 물 2 → 앞 둘', () => {
+    const chart = withElements([...rep('fire', 3), ...rep('earth', 3), ...rep('air', 2), ...rep('water', 2)]);
+    const el = buildCards(chart, null).cards[4];
+    if (el.kind !== 'elements') throw new Error();
+    expect(el.top).toEqual(['fire', 'earth']);
+    expect(el.line).toBe(tieLine('fire', 'earth'));
+    expect(el.line).toBe('불과 흙이 비슷하게 강해요');
+  });
+  it('3자 동점: 불·공기·물 3 / 흙 1 → 문구는 앞 둘만', () => {
+    const chart = withElements([...rep('fire', 3), ...rep('air', 3), ...rep('water', 3), 'earth']);
+    const el = buildCards(chart, null).cards[4];
+    if (el.kind !== 'elements') throw new Error();
+    expect(el.top).toEqual(['fire', 'air', 'water']);
+    expect(el.line).toBe('불과 공기가 비슷하게 강해요');
+  });
+});
+
+describe('이름 다듬기', () => {
+  it('앞뒤 공백을 자른다', () => {
+    expect(buildCards(known, ' 나 ').name).toBe('나');
   });
 });
