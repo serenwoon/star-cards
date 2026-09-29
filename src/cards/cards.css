@@ -1,0 +1,41 @@
+.card { position: relative; display: flex; flex-direction: column; padding: 96px 88px 80px;
+  color: #2b2d42; font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif; overflow: hidden; }
+.card.el-fire { background: linear-gradient(180deg, #ff9a8b 0%, #ffd3a5 100%); }
+.card.el-earth { background: linear-gradient(180deg, #b8d8be 0%, #f5f0d6 100%); }
+.card.el-air { background: linear-gradient(180deg, #fff3b0 0%, #c8f0e0 100%); }
+.card.el-water { background: linear-gradient(180deg, #a8d8ff 0%, #d8c8ff 100%); }
+.card-top { display: flex; flex-direction: column; gap: 12px; }
+.card-no { font-size: 34px; font-weight: 600; opacity: .6; letter-spacing: .08em; }
+.card-title { margin: 0; font-size: 88px; font-weight: 800; letter-spacing: -.02em; }
+.card-body { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 48px; }
+.card-foot { display: flex; justify-content: space-between; font-size: 36px; font-weight: 600; opacity: .7; }
+.hero { text-align: center; }
+.glyph { font-variant-emoji: text; margin-right: 16px; }
+.glyph.big { display: block; font-size: 260px; line-height: 1.1; margin: 0; }
+.hero-name { margin: 0; font-size: 72px; font-weight: 800; }
+.panel { background: rgba(255, 255, 255, .55); border-radius: 48px; padding: 56px 60px; display: flex; flex-direction: column; gap: 18px; }
+.sign-row { display: flex; justify-content: space-between; align-items: baseline; gap: 24px; font-size: 44px; font-weight: 700; }
+.sign-label { font-size: 34px; font-weight: 600; opacity: .7; }
+.sign-missing { font-size: 34px; opacity: .6; }
+.line { margin: 0 0 20px; font-size: 42px; line-height: 1.5; font-weight: 500; }
+.line.strong { font-weight: 700; margin-top: 24px; }
+.kicker { margin: 0; font-size: 34px; font-weight: 700; opacity: .7; }
+.tags { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+.tag { background: rgba(255, 255, 255, .7); border-radius: 999px; padding: 18px 36px; font-size: 48px; font-weight: 700; }
+.bar-row { display: grid; grid-template-columns: 110px 1fr 60px; align-items: center; gap: 24px; font-size: 44px; font-weight: 700; }
+.bar-track { height: 36px; background: rgba(43, 45, 66, .1); border-radius: 18px; overflow: hidden; }
+.bar-fill { display: block; height: 100%; border-radius: 18px; }
+.fill-fire { background: #ff7a6b; } .fill-earth { background: #7fb88a; } .fill-air { background: #e8c94a; } .fill-water { background: #6aa8ff; }
+.bar-row.top .bar-label { text-decoration: underline 6px; text-underline-offset: 10px; }
+.bar-num { text-align: right; }
+.wheel-wrap { display: flex; justify-content: center; }
+.static-wheel text { text-anchor: middle; dominant-baseline: central; fill: #2b2d42; font-size: 20px; font-variant-emoji: text; }
+.static-wheel .zs path { stroke: rgba(43, 45, 66, .25); fill-opacity: .35; }
+.static-wheel .zs.fire path { fill: #ff9a8b; } .static-wheel .zs.earth path { fill: #9cc7a4; }
+.static-wheel .zs.air path { fill: #f3dd6a; } .static-wheel .zs.water path { fill: #8ec3ff; }
+.static-wheel .ring { fill: rgba(255, 255, 255, .5); stroke: rgba(43, 45, 66, .3); }
+.static-wheel .cusp { stroke: rgba(43, 45, 66, .3); }
+.static-wheel .asp { stroke-width: 1.6; opacity: .75; } .static-wheel .asp.soft { stroke: #3a7bd5; } .static-wheel .asp.hard { stroke: #e0605a; } .static-wheel .asp.blend { stroke: #8a6fd6; }
+.static-wheel .pl circle { fill: #fff; stroke: rgba(43, 45, 66, .5); }
+.static-wheel .tick { stroke: rgba(43, 45, 66, .5); }
+.static-wheel .axis { font-size: 16px; font-weight: 700; }
