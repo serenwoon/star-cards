@@ -20,9 +20,6 @@ let fontCSS: Promise<string> | null = null;
 
 /** 화면에서 축소돼 있어도 원래 크기(1080×1920)로 캡처한다. 축소 변환은 조상(.scaled-inner)에 있다. */
 export async function cardToBlob(node: HTMLElement): Promise<Blob> {
-  if (node.closest<HTMLElement>('.scaled-inner')?.style.visibility === 'hidden') {
-    throw new Error('카드를 아직 준비하고 있어요');
-  }
   await document.fonts.ready;
   if (!fontCSS) {
     fontCSS = getFontEmbedCSS(node);
@@ -56,4 +53,11 @@ export async function shareFiles(files: File[], title: string): Promise<void> {
 
 export function isAbort(e: unknown): boolean {
   return e instanceof DOMException && e.name === 'AbortError';
+}
+
+/** 공유 실패를 가른다: 취소는 조용히, 제스처 만료(NotAllowedError)는 다음 탭에서 재시도, 그 밖은 오류. */
+export function classifyShareError(e: unknown): 'abort' | 'expired' | 'other' {
+  if (isAbort(e)) return 'abort';
+  if (e instanceof DOMException && e.name === 'NotAllowedError') return 'expired';
+  return 'other';
 }

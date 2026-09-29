@@ -6,44 +6,71 @@ import { buildCards, type CardSet } from './cards/model';
 import { BirthForm } from './ui/BirthForm';
 import { CardDeck } from './ui/CardDeck';
 import { CardActions } from './ui/CardActions';
-import { canShareFiles, cardToBlob, downloadBlob, fileName, isAbort, shareFiles } from './share/exportCard';
+import { canShareFiles, cardToBlob, downloadBlob, fileName, classifyShareError, isAbort, shareFiles } from './share/exportCard';
 import './cards/cards.css';
 import './ui/ui.css';
 
 export default function App() {
   const [input, setInput] = useState<BirthInput | null>(loadLastInput);
   const nodes = useRef<(HTMLDivElement | null)[]>([]);
-  const built = useMemo((): { set: { set: CardSet; status: string } | null; error: string | null } => {
-    if (!input) return { set: null, error: null };
+  const built = useMemo((): { result: { cardSet: CardSet; status: string } | null; error: string | null } => {
+    if (!input) return { result: null, error: null };
     const city = cityById(input.cityId);
-    if (!city) return { set: null, error: '저장된 도시를 찾을 수 없어요. 다시 골라 주세요.' };
+    if (!city) return { result: null, error: '저장된 도시를 찾을 수 없어요. 다시 골라 주세요.' };
     try {
       const chart = computeChart({ date: input.date, time: input.time, lat: city.lat, lon: city.lon, tz: city.tz, system: 'placidus' });
-      return { set: { set: buildCards(chart, input.name || null), status: chart.timeStatus }, error: null };
+      return { result: { cardSet: buildCards(chart, input.name || null), status: chart.timeStatus }, error: null };
     } catch {
-      return { set: null, error: '이 날짜로는 계산하지 못했어요. 입력을 확인해 주세요.' };
+      return { result: null, error: '이 날짜로는 계산하지 못했어요. 입력을 확인해 주세요.' };
     }
   }, [input]);
-  const set = built.set;
+  const set = built.result;
   const [all, setAll] = useState<'idle' | 'busy' | 'error'>('idle');
+  // 공유 제스처가 만료됐을 때 만들어 둔 파일. 카드 묶음이 바뀌면 무효.
+  const [ready, setReady] = useState<{ forSet: CardSet; files: File[] } | null>(null);
+  const readyFiles = set && ready?.forSet === set.cardSet ? ready.files : null;
   const cardNode = (i: number) => nodes.current[i]?.firstElementChild as HTMLElement | null;
+  async function downloadFiles(files: File[]) {
+    for (const f of files) {
+      downloadBlob(f, f.name);
+      await new Promise((r) => setTimeout(r, 300));
+    }
+  }
   async function saveAll() {
     if (!set) return;
     setAll('busy');
     try {
-      const blobs: { blob: Blob; name: string }[] = [];
-      for (let i = 0; i < set.set.cards.length; i++) {
+      if (readyFiles) {
+        // 새 탭(새 제스처) 안에서 곧바로 공유
+        try {
+          await shareFiles(readyFiles, 'star-cards');
+        } catch (e) {
+          if (classifyShareError(e) === 'abort') { setAll('idle'); return; }
+          await downloadFiles(readyFiles);
+        }
+        setReady(null);
+        setAll('idle');
+        return;
+      }
+      const files: File[] = [];
+      for (let i = 0; i < set.cardSet.cards.length; i++) {
         const node = cardNode(i);
         if (!node) throw new Error('카드를 찾지 못했어요');
-        blobs.push({ blob: await cardToBlob(node), name: fileName(i, set.set.cards[i].title) });
+        const name = fileName(i, set.cardSet.cards[i].title);
+        files.push(new File([await cardToBlob(node)], name, { type: 'image/png' }));
       }
       if (canShareFiles()) {
-        await shareFiles(blobs.map((b) => new File([b.blob], b.name, { type: 'image/png' })), 'star-cards');
-      } else {
-        for (const b of blobs) {
-          downloadBlob(b.blob, b.name);
-          await new Promise((r) => setTimeout(r, 300));
+        try {
+          await shareFiles(files, 'star-cards');
+        } catch (e) {
+          const kind = classifyShareError(e);
+          if (kind === 'abort') { setAll('idle'); return; }
+          setReady({ forSet: set.cardSet, files });
+          setAll('idle');
+          return;
         }
+      } else {
+        await downloadFiles(files);
       }
       setAll('idle');
     } catch (e) {
@@ -67,17 +94,17 @@ export default function App() {
       {set && <p className="swipe-hint">옆으로 넘겨 보세요</p>}
       {set && (
         <div className="deck-tools">
-          <button type="button" disabled={all === 'busy'} onClick={saveAll}>
-            {all === 'busy' ? '만드는 중…' : shareAll ? '6장 모두 공유' : '6장 모두 저장'}
+          <button type="button" disabled={all === 'busy'} aria-busy={all === 'busy'} onClick={saveAll}>
+            {all === 'busy' ? '만드는 중…' : readyFiles ? '준비됐어요 · 눌러서 6장 공유' : shareAll ? '6장 모두 공유' : '6장 모두 저장'}
           </button>
-          {all === 'error' && <span className="err">저장하지 못했어요</span>}
+          {all === 'error' && <span className="err" role="alert">저장하지 못했어요</span>}
         </div>
       )}
       {set && (
         <CardDeck
-          set={set.set}
+          set={set.cardSet}
           onCardNode={onCardNode}
-          renderActions={(i) => <CardActions index={i} title={set.set.cards[i].title} getNode={() => cardNode(i)} />}
+          renderActions={(i) => <CardActions index={i} title={set.cardSet.cards[i].title} resetKey={set.cardSet} getNode={() => cardNode(i)} />}
         />
       )}
       <footer className="foot">

@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { fileName, canShareFiles } from '../src/share/exportCard';
+import { fileName, canShareFiles, classifyShareError } from '../src/share/exportCard';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -23,5 +23,13 @@ describe('canShareFiles', () => {
   it('canShare가 던지면 false', () => {
     vi.stubGlobal('navigator', { share: () => Promise.resolve(), canShare: () => { throw new Error(); } });
     expect(canShareFiles()).toBe(false);
+  });
+});
+
+describe('classifyShareError', () => {
+  it('취소·제스처 만료·그 밖을 가른다', () => {
+    expect(classifyShareError(new DOMException('x', 'AbortError'))).toBe('abort');
+    expect(classifyShareError(new DOMException('x', 'NotAllowedError'))).toBe('expired');
+    expect(classifyShareError(new Error('x'))).toBe('other');
   });
 });
