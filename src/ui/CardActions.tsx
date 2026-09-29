@@ -29,8 +29,10 @@ export function CardActions({ index, title, resetKey, getNode }: { index: number
       if (mode === 'share') {
         const f = new File([blob], name, { type: 'image/png' });
         try { await shareFiles([f], title); } catch (e) {
-          if (classifyShareError(e) === 'expired') { setCached({ key: resetKey, file: f }); setState('idle'); return; }
-          throw e;
+          const kind = classifyShareError(e);
+          if (kind === 'abort') { setState('idle'); return; }
+          if (kind === 'expired') { setCached({ key: resetKey, file: f }); setState('idle'); return; }
+          downloadBlob(blob, name);
         }
       } else downloadBlob(blob, name);
       setState('idle');
@@ -41,8 +43,8 @@ export function CardActions({ index, title, resetKey, getNode }: { index: number
 
   return (
     <div className="card-actions">
-      <button type="button" disabled={state === 'busy'} aria-busy={state === 'busy'} onClick={() => run('save')}>{state === 'busy' ? '만드는 중…' : '저장'}</button>
-      {share && <button type="button" disabled={state === 'busy'} aria-busy={state === 'busy'} onClick={() => run('share')}>{file ? '준비됐어요 · 눌러서 공유' : '공유'}</button>}
+      <button type="button" disabled={state === 'busy'} aria-busy={state === 'busy'} aria-label={`${title} 저장`} onClick={() => run('save')}>{state === 'busy' ? '만드는 중…' : '저장'}</button>
+      {share && <button type="button" disabled={state === 'busy'} aria-busy={state === 'busy'} aria-label={`${title} 공유`} onClick={() => run('share')}>{file ? '준비됐어요 · 눌러서 공유' : '공유'}</button>}
       {state === 'error' && <span className="err" role="alert">저장하지 못했어요 · 다시 눌러 주세요</span>}
     </div>
   );

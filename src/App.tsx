@@ -65,9 +65,13 @@ export default function App() {
         } catch (e) {
           const kind = classifyShareError(e);
           if (kind === 'abort') { setAll('idle'); return; }
-          setReady({ forSet: set.cardSet, files });
-          setAll('idle');
-          return;
+          if (kind === 'expired') {
+            // 제스처가 만료됐으면 만든 파일을 두고 다음 탭에서 공유한다
+            setReady({ forSet: set.cardSet, files });
+            setAll('idle');
+            return;
+          }
+          await downloadFiles(files);
         }
       } else {
         await downloadFiles(files);
@@ -89,8 +93,8 @@ export default function App() {
         onClear={() => { clearLastInput(); setInput(null); }}
       />
       {built.error && <p className="err" role="alert">{built.error}</p>}
-      {set?.status === 'gap' && <p className="warn">서머타임 전환으로 없는 시각이라 전환 전 시간으로 계산했어요.</p>}
-      {set?.status === 'overlap' && <p className="warn">서머타임이 끝나 두 번 있는 시각이라 앞쪽 시각으로 계산했어요.</p>}
+      {set?.status === 'gap' && <p className="warn" role="status">서머타임 전환으로 없는 시각이라 전환 전 시간으로 계산했어요.</p>}
+      {set?.status === 'overlap' && <p className="warn" role="status">서머타임이 끝나 두 번 있는 시각이라 앞쪽 시각으로 계산했어요.</p>}
       {set && <p className="swipe-hint">옆으로 넘겨 보세요</p>}
       {set && (
         <div className="deck-tools">
@@ -109,7 +113,8 @@ export default function App() {
       )}
       <footer className="foot">
         점성술 해설은 재미와 자기 성찰용입니다. 천체 위치는 astronomy-engine으로 계산합니다.
-        도시 데이터: <a href="https://www.geonames.org/">GeoNames</a> (CC BY 4.0), 가공.
+        도시 데이터: <a href="https://www.geonames.org/">GeoNames</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>), 가공.
+        글꼴: <a href="/licenses/Pretendard-OFL.txt">Pretendard (OFL 1.1)</a>.
       </footer>
     </div>
   );

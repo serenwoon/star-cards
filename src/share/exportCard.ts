@@ -17,6 +17,7 @@ export function canShareFiles(): boolean {
 }
 
 let fontCSS: Promise<string> | null = null;
+let warmedUp = false;
 
 /** 화면에서 축소돼 있어도 원래 크기(1080×1920)로 캡처한다. 축소 변환은 조상(.scaled-inner)에 있다. */
 export async function cardToBlob(node: HTMLElement): Promise<Blob> {
@@ -25,13 +26,19 @@ export async function cardToBlob(node: HTMLElement): Promise<Blob> {
     fontCSS = getFontEmbedCSS(node);
     fontCSS.catch(() => { fontCSS = null; });
   }
-  const blob = await toBlob(node, {
+  const opts = {
     width: CARD_W,
     height: CARD_H,
     pixelRatio: 1,
     fontEmbedCSS: await fontCSS,
     style: { transform: 'none', visibility: 'visible' },
-  });
+  };
+  if (!warmedUp) {
+    // WebKit은 첫 foreignObject 캡처가 대체 글꼴이나 빈 그림으로 나올 수 있어 한 번 버리고 다시 그린다.
+    await toBlob(node, opts);
+    warmedUp = true;
+  }
+  const blob = await toBlob(node, opts);
   if (!blob) throw new Error('이미지를 만들지 못했어요');
   return blob;
 }
