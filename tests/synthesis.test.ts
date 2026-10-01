@@ -19,11 +19,11 @@ const paragraphs = () => [
   ...MODALITIES.map((m) => MODALITY_FOCUS[m]),
   ...RELATIONS.map((r) => VENUS_MARS[r]),
 ];
-const touches = () => [SATURN_TOUCH.sun, SATURN_TOUCH.moon];
+const touches = () => [SATURN_TOUCH.sun, SATURN_TOUCH.moon, SATURN_TOUCH.both];
 const sentences = (p: string) => p.split(/(?<=[.?])\s+/).length;
 
 describe('연결 해석 문구', () => {
-  it('표마다 빠짐없음(16/6/3/12/3/3/2)', () => {
+  it('표마다 빠짐없음(16/6/3/12/3/3/3)', () => {
     expect(Object.keys(SUN_MOON).sort()).toEqual([...ELEMENTS].sort());
     for (const s of ELEMENTS) {
       expect(Object.keys(SUN_MOON[s]).sort()).toEqual([...ELEMENTS].sort());
@@ -34,7 +34,7 @@ describe('연결 해석 문구', () => {
     expect(HOUSE_FOCUS).toHaveLength(12);
     expect(Object.keys(MODALITY_FOCUS).sort()).toEqual([...MODALITIES].sort());
     expect(Object.keys(VENUS_MARS).sort()).toEqual([...RELATIONS].sort());
-    expect(Object.keys(SATURN_TOUCH).sort()).toEqual(['moon', 'sun']);
+    expect(Object.keys(SATURN_TOUCH).sort()).toEqual(['both', 'moon', 'sun']);
     expect(paragraphs()).toHaveLength(43);
   });
 
@@ -73,8 +73,26 @@ describe('연결 해석 문구', () => {
     });
   });
 
-  it('HOUSE_FOCUS[n-1]은 n하우스를 말한다', () => {
-    HOUSE_FOCUS.forEach((p, i) => expect(p.startsWith(`${i + 1}하우스`), p).toBe(true));
+  it('HOUSE_FOCUS[n-1]은 n하우스를 말하고, 천체가 하나여도 읽히게 「몰리면」을 쓰지 않는다', () => {
+    HOUSE_FOCUS.forEach((p, i) => {
+      expect(p.startsWith(`${i + 1}하우스에 무게가 실리면 삶의 중심이 `), p).toBe(true);
+      expect(p.includes('천체가 몰리면'), p).toBe(false);
+    });
+  });
+
+  it('MODALITY_FOCUS는 동점일 때도 읽히게 「가장 많은」을 쓰지 않는다', () => {
+    MODALITIES.forEach((m) => expect(MODALITY_FOCUS[m].includes('가장 많은'), MODALITY_FOCUS[m]).toBe(false));
+  });
+
+  it('VENUS_MARS는 ASC_SUN과 같은 뼈대(「…원소여서,」)로 시작하지 않고, SATURN_TOUCH.both는 따로 쓴 문장이다', () => {
+    const heads = RELATIONS.map((r) => VENUS_MARS[r].slice(0, 12));
+    expect(new Set(heads).size).toBe(heads.length);
+    RELATIONS.forEach((r) => expect(VENUS_MARS[r].split('.')[0].includes('원소여서,'), VENUS_MARS[r]).toBe(false));
+    expect(SATURN_TOUCH.both).toContain('태양·달 모두');
+  });
+
+  it('충 문단은 결이 통하는 원소끼리라는 점을 먼저 짚는다', () => {
+    expect(SUN_MOON_ASPECT.opposition).toContain('결이 통하는 사이라도');
   });
 });
 

@@ -3,7 +3,7 @@ import { computeChart, chartPoints, type Chart } from '../src/astro/chart';
 import { natalAspects } from '../src/astro/aspects';
 import { BODY_IDS, type BodyId } from '../src/astro/bodies';
 import {
-  sunMoonAspect, busiestHouse, topModality, chartRuler, tightestAspects, saturnTouches,
+  sunMoonHit, sunMoonAspect, busiestHouse, topModality, chartRuler, tightestAspects, saturnTouches,
 } from '../src/cards/synthesisModel';
 
 const seoul = { lat: 37.5665, lon: 126.978, tz: 'Asia/Seoul', system: 'placidus' as const };
@@ -36,6 +36,13 @@ describe('sunMoonAspect', () => {
     const c = handChart({ ...SPREAD, sun: 0, moon: 91 });
     const flipped = { ...c, aspects: c.aspects.map((a) => ({ ...a, a: a.b, b: a.a })) };
     expect(sunMoonAspect(flipped)).toBe('square');
+  });
+});
+
+describe('sunMoonHit', () => {
+  it('태양–달 각도를 그대로 돌려주고, 없으면 undefined', () => {
+    expect(sunMoonHit(known)).toBe(known.aspects.find((a) => a.a === 'sun' && a.b === 'moon'));
+    expect(sunMoonHit(handChart({ ...SPREAD, sun: 0, moon: 45 }))).toBeUndefined();
   });
 });
 
@@ -93,6 +100,10 @@ describe('tightestAspects', () => {
     expect(top).toHaveLength(3);
     expect(top).toEqual([...known.aspects].sort((x, y) => x.orb - y.orb).slice(0, 3));
     expect(top.map((a) => `${a.a}-${a.b}`)).toEqual(['moon-asc', 'jupiter-uranus', 'sun-moon']);
+  });
+  it('skip으로 준 각도는 빼고 다음 것을 채운다', () => {
+    const top = tightestAspects(known, 3, sunMoonHit(known));
+    expect(top.map((a) => `${a.a}-${a.b}`)).toEqual(['moon-asc', 'jupiter-uranus', 'sun-asc']);
   });
   it('각도가 n개보다 적으면 있는 만큼만, 원본은 건드리지 않는다', () => {
     const c = handChart(SPREAD);

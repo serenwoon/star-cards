@@ -11,9 +11,14 @@ const MODALITY_ORDER: Modality[] = ['cardinal', 'fixed', 'mutable'];
 const between = (chart: Chart, x: PointId, y: PointId) =>
   chart.aspects.find((a) => (a.a === x && a.b === y) || (a.a === y && a.b === x));
 
-/** 태양과 달 사이의 주요 각도. 없으면 'none'. */
+/** 태양과 달 사이의 주요 각도 그 자체. 없으면 undefined. */
+export function sunMoonHit(chart: Chart): Aspect | undefined {
+  return between(chart, 'sun', 'moon');
+}
+
+/** 태양과 달 사이의 주요 각도 종류. 없으면 'none'. */
 export function sunMoonAspect(chart: Chart): AspectType | 'none' {
-  return between(chart, 'sun', 'moon')?.type ?? 'none';
+  return sunMoonHit(chart)?.type ?? 'none';
 }
 
 /**
@@ -52,9 +57,9 @@ export function chartRuler(chart: Chart): { planet: BodyId; sign: SignId; house:
   return { planet, sign: signOf(lon), house: houseOf(lon, chart.houses.cusps) };
 }
 
-/** orb가 작은 순서로 n개. 시각을 알면 ASC·MC와 맺은 각도도 들어간다. */
-export function tightestAspects(chart: Chart, n: number): Aspect[] {
-  return [...chart.aspects].sort((x, y) => x.orb - y.orb).slice(0, n);
+/** orb가 작은 순서로 n개. 시각을 알면 ASC·MC와 맺은 각도도 들어간다. skip은 이미 다른 자리에서 보여 준 각도. */
+export function tightestAspects(chart: Chart, n: number, skip?: Aspect): Aspect[] {
+  return chart.aspects.filter((a) => a !== skip).sort((x, y) => x.orb - y.orb).slice(0, n);
 }
 
 /** 토성이 태양·달과 주요 각도를 맺고 있으면 그쪽을 돌려준다. */
