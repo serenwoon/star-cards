@@ -6,6 +6,11 @@ import { NATAL } from '../src/content/natal';
 import { ELEMENT_DETAIL } from '../src/content/cards/elementDetail';
 import { GROWTH_ELEMENT, GROWTH_SATURN, GROWTH_NODE, GROWTH_MOON, GROWTH_ASC } from '../src/content/cards/growth';
 import { TRAITS } from '../src/content/cards/traits';
+import {
+  SUN_MOON, SUN_MOON_ASPECT, ASC_SUN, HOUSE_FOCUS, MODALITY_FOCUS, VENUS_MARS, SATURN_TOUCH,
+} from '../src/content/cards/synthesis';
+import { placementText, aspectText } from '../src/content/interpret';
+import { tightestAspects } from '../src/cards/synthesisModel';
 import { SIGNS } from '../src/content/signs';
 import { HOUSES } from '../src/content/houses';
 import { PLANETS } from '../src/content/planets';
@@ -168,8 +173,7 @@ describe('buildDetail', () => {
   it('종합: 타고난 기질은 원소 개수 한 줄과 가장 강한 원소 설명', () => {
     const d = details(known).summary;
     const el = cardOf(known, 'elements');
-    const sec = d.sections[1];
-    expect(sec.heading).toBe('타고난 기질');
+    const sec = d.sections.find((s) => s.heading === '타고난 기질')!;
     expect(sec.paragraphs[0]).toBe(`불 ${el.counts.fire} · 흙 ${el.counts.earth} · 공기 ${el.counts.air} · 물 ${el.counts.water}`);
     expect(sec.paragraphs.slice(1)).toEqual(el.top.slice(0, 2).map((e) => ELEMENT_DETAIL[e]));
   });
@@ -177,16 +181,89 @@ describe('buildDetail', () => {
   it('종합: 더 자랄 수 있는 방향 다섯 갈래(서울 1990)', () => {
     const d = details(known).summary;
     const heads = d.sections.map((s) => s.heading);
-    expect(heads).toEqual([
-      '한눈에 보기', '타고난 기질', '더 자랄 수 있는 방향',
+    expect(heads.slice(heads.indexOf('타고난 기질'))).toEqual([
+      '타고난 기질', '더 자랄 수 있는 방향',
       '약한 원소 채우기 · 공기', '토성 · 염소자리', '북쪽 노드 · 물병자리', '달 · 염소자리', '상승궁 · 처녀자리',
     ]);
     const by = (h: string) => d.sections.find((s) => s.heading === h)!.paragraphs;
     expect(by('약한 원소 채우기 · 공기')).toEqual([GROWTH_ELEMENT.air]);
-    expect(by('토성 · 염소자리')).toEqual([GROWTH_SATURN.capricorn]);
+    // 서울 1990은 토성이 태양(삼분)·달(합)과 모두 닿아 조언 앞에 두 문장이 붙는다
+    expect(by('토성 · 염소자리')).toEqual([SATURN_TOUCH.sun, SATURN_TOUCH.moon, GROWTH_SATURN.capricorn]);
     expect(by('북쪽 노드 · 물병자리')).toEqual([GROWTH_NODE.aquarius]);
     expect(by('달 · 염소자리')).toEqual([GROWTH_MOON.capricorn]);
     expect(by('상승궁 · 처녀자리')).toEqual([GROWTH_ASC.virgo]);
+  });
+
+  it('종합: 연결 해석 여섯 항목이 한눈에 보기와 타고난 기질 사이에 순서대로 온다(서울 1990)', () => {
+    const d = details(known).summary;
+    expect(d.sections.map((s) => s.heading)).toEqual([
+      '한눈에 보기',
+      '속마음과 바라는 것 · 태양 흙 × 달 흙',
+      '안에서 맞는가, 부딪치는가 · 태양과 달 삼분',
+      '겉모습과 실제 · 상승궁 처녀자리 × 태양 황소자리',
+      '삶의 무게중심 · 4하우스',
+      '움직이는 방식 · 활동',
+      '사랑과 일의 연결',
+      '가장 강하게 이어진 세 가지',
+      '타고난 기질', '더 자랄 수 있는 방향',
+      '약한 원소 채우기 · 공기', '토성 · 염소자리', '북쪽 노드 · 물병자리', '달 · 염소자리', '상승궁 · 처녀자리',
+    ]);
+    expect(d.sections.length).toBeGreaterThanOrEqual(13);
+  });
+
+  it('종합: 연결 해석 문단은 원소 조합·각도·하우스·양태로 고른다(서울 1990)', () => {
+    const d = details(known).summary;
+    const by = (h: string) => d.sections.find((s) => s.heading.startsWith(h))!.paragraphs;
+    expect(by('속마음과 바라는 것')).toEqual([SUN_MOON.earth.earth]);
+    const sunMoon = known.aspects.find((a) => a.a === 'sun' && a.b === 'moon')!;
+    expect(by('안에서 맞는가')).toEqual([SUN_MOON_ASPECT.trine, aspectText(sunMoon, { mode: 'natal' })]);
+    expect(by('겉모습과 실제')).toEqual([ASC_SUN.same]);
+    expect(by('삶의 무게중심')).toEqual(['달, 토성, 천왕성, 해왕성이 모여 있습니다.', HOUSE_FOCUS[3]]);
+    expect(by('움직이는 방식')).toEqual(['활동 6 · 고정 3 · 변통 1', MODALITY_FOCUS.cardinal]);
+    expect(by('사랑과 일의 연결')).toEqual([
+      VENUS_MARS.cross, '상승궁의 지배 행성은 수성입니다.', ...placementText('mercury', 'taurus', 8),
+    ]);
+    const top = by('가장 강하게 이어진 세 가지');
+    expect(top).toHaveLength(3);
+    expect(top).toEqual(tightestAspects(known, 3).map((a) => aspectText(a, { mode: 'natal' })));
+  });
+
+  it('종합: 시각 모름이면 겉모습·무게중심 섹션과 지배 행성 문장이 빠진다', () => {
+    const d = details(unknown).summary;
+    const heads = d.sections.map((s) => s.heading);
+    expect(heads.slice(0, 7)).toEqual([
+      '한눈에 보기',
+      '속마음과 바라는 것 · 태양 흙 × 달 흙',
+      '안에서 맞는가, 부딪치는가 · 태양과 달 삼분',
+      '움직이는 방식 · 활동',
+      '사랑과 일의 연결',
+      '가장 강하게 이어진 세 가지',
+      '타고난 기질',
+    ]);
+    expect(heads.some((h) => h.startsWith('겉모습과 실제') || h.startsWith('삶의 무게중심'))).toBe(false);
+    const all = text(d);
+    expect(all).not.toContain('지배 행성');
+    for (const p of [...Object.values(ASC_SUN), ...HOUSE_FOCUS]) expect(all).not.toContain(p);
+    expect(d.sections.find((s) => s.heading === '사랑과 일의 연결')!.paragraphs).toEqual([VENUS_MARS.cross]);
+    expect(d.sections.find((s) => s.heading === '가장 강하게 이어진 세 가지')!.paragraphs).toHaveLength(3);
+  });
+
+  it('종합: 태양·달 각도가 없으면 「각도 없음」, 양태 동점이면 둘 다, 토성이 안 닿으면 조언만', () => {
+    // 열 천체를 양자리 4·황소자리 4·쌍둥이자리 2로 놓되 태양·달·토성은 서로 각도가 없게 한다
+    const plan: Record<string, number> = {
+      sun: 1, moon: 46, mercury: 5, venus: 9, mars: 13, jupiter: 50, saturn: 71, uranus: 54, neptune: 58, pluto: 75,
+    };
+    const bodies = known.bodies.map((b) => (b.id in plan ? { ...b, lon: plan[b.id] } : b));
+    const chart = { ...known, bodies, aspects: known.aspects.filter((a) => ![a.a, a.b].some((x) => x === 'sun' || x === 'moon' || x === 'saturn')) };
+    const d = details(chart).summary;
+    const by = (h: string) => d.sections.find((s) => s.heading.startsWith(h))!;
+    expect(by('안에서 맞는가').heading).toBe('안에서 맞는가, 부딪치는가 · 태양과 달 각도 없음');
+    expect(by('안에서 맞는가').paragraphs).toEqual([SUN_MOON_ASPECT.none]);
+    expect(by('속마음과 바라는 것').heading).toBe('속마음과 바라는 것 · 태양 불 × 달 흙');
+    expect(by('속마음과 바라는 것').paragraphs).toEqual([SUN_MOON.fire.earth]);
+    expect(by('움직이는 방식').heading).toBe('움직이는 방식 · 활동·고정');
+    expect(by('움직이는 방식').paragraphs).toEqual(['활동 4 · 고정 4 · 변통 2', MODALITY_FOCUS.cardinal, MODALITY_FOCUS.fixed]);
+    expect(by('토성 · ').paragraphs).toEqual([GROWTH_SATURN.gemini]);
   });
 
   it('종합: 시각 모름이면 상승궁 해설·조언 대신 안내 한 줄', () => {

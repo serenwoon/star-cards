@@ -10,7 +10,14 @@ import { placementText, ascText, aspectText } from '../content/interpret';
 import { ELEMENT_DETAIL } from '../content/cards/elementDetail';
 import { GROWTH_ELEMENT, GROWTH_SATURN, GROWTH_NODE, GROWTH_MOON, GROWTH_ASC } from '../content/cards/growth';
 import { TRAITS } from '../content/cards/traits';
+import {
+  SUN_MOON, SUN_MOON_ASPECT, ASC_SUN, HOUSE_FOCUS, MODALITY_FOCUS, VENUS_MARS, SATURN_TOUCH, elementRelation,
+} from '../content/cards/synthesis';
+import { ASPECTS } from '../content/aspects';
+import { josa } from '../content/josa';
+import { balance } from '../astro/balance';
 import { ELEMENT_ORDER, elementSummary, weakestElement, type CardData } from './model';
+import { sunMoonAspect, busiestHouse, topModality, chartRuler, tightestAspects, saturnTouches } from './synthesisModel';
 
 export type DetailSection = { heading: string; paragraphs: string[]; rows?: string[][]; columns?: string[] };
 export type Detail = { title: string; sections: DetailSection[] };
@@ -36,6 +43,72 @@ function placement(chart: Chart, id: BodyId, opts: { lead?: string; rich?: boole
     if (house !== null) paragraphs.push(HOUSES[house - 1].body);
   }
   return { heading: head(PLANETS[id].ko, sign), paragraphs };
+}
+
+/** 종합 긴 글의 연결 해석: 배치 하나씩이 아니라 둘 이상이 만나서 생기는 결을 읽는다. */
+function connections(chart: Chart): DetailSection[] {
+  const sun = signOf(lonOf(chart, 'sun'));
+  const moon = signOf(lonOf(chart, 'moon'));
+  const asc = chart.houses ? signOf(chart.houses.asc) : null;
+  const out: DetailSection[] = [];
+
+  out.push({
+    heading: `속마음과 바라는 것 · 태양 ${ELEMENT_KO[ELEMENT[sun]]} × 달 ${ELEMENT_KO[ELEMENT[moon]]}`,
+    paragraphs: [SUN_MOON[ELEMENT[sun]][ELEMENT[moon]]],
+  });
+
+  const type = sunMoonAspect(chart);
+  const hit = chart.aspects.find((a) => (a.a === 'sun' && a.b === 'moon') || (a.a === 'moon' && a.b === 'sun'));
+  out.push({
+    heading: `안에서 맞는가, 부딪치는가 · 태양과 달 ${type === 'none' ? '각도 없음' : ASPECTS[type].ko}`,
+    paragraphs: [SUN_MOON_ASPECT[type], ...(hit ? [aspectText(hit, { mode: 'natal' })] : [])],
+  });
+
+  if (asc) {
+    out.push({
+      heading: `겉모습과 실제 · 상승궁 ${SIGNS[asc].ko} × 태양 ${SIGNS[sun].ko}`,
+      paragraphs: [ASC_SUN[elementRelation(ELEMENT[asc], ELEMENT[sun])]],
+    });
+  }
+
+  const busy = busiestHouse(chart);
+  if (busy) {
+    const names = busy.bodies.map((id) => PLANETS[id].ko);
+    const last = names[names.length - 1];
+    // 천체가 하나뿐이면 「모여」가 어색하니 「놓여」로 적는다
+    const line = `${names.join(', ')}${josa(last, '이', '가')} ${names.length > 1 ? '모여' : '놓여'} 있습니다.`;
+    out.push({ heading: `삶의 무게중심 · ${busy.house}하우스`, paragraphs: [line, HOUSE_FOCUS[busy.house - 1]] });
+  }
+
+  const modality = balance(chart.bodies).modality;
+  const tops = topModality(chart.bodies).slice(0, 2);
+  out.push({
+    heading: `움직이는 방식 · ${tops.map((m) => MODALITY_KO[m]).join('·')}`,
+    paragraphs: [
+      (['cardinal', 'fixed', 'mutable'] as const).map((m) => `${MODALITY_KO[m]} ${modality[m]}`).join(' · '),
+      ...tops.map((m) => MODALITY_FOCUS[m]),
+    ],
+  });
+
+  const venus = ELEMENT[signOf(lonOf(chart, 'venus'))];
+  const mars = ELEMENT[signOf(lonOf(chart, 'mars'))];
+  const ruler = chartRuler(chart);
+  out.push({
+    heading: '사랑과 일의 연결',
+    paragraphs: [
+      VENUS_MARS[elementRelation(venus, mars)],
+      ...(ruler
+        ? [`상승궁의 지배 행성은 ${PLANETS[ruler.planet].ko}입니다.`, ...placementText(ruler.planet, ruler.sign, ruler.house)]
+        : []),
+    ],
+  });
+
+  const top = tightestAspects(chart, 3);
+  out.push({
+    heading: '가장 강하게 이어진 세 가지',
+    paragraphs: top.length ? top.map((a) => aspectText(a, { mode: 'natal' })) : ['주요 각도가 없습니다.'],
+  });
+  return out;
 }
 
 export function buildDetail(card: CardData, chart: Chart): Detail {
@@ -126,6 +199,7 @@ export function buildDetail(card: CardData, chart: Chart): Detail {
               `강점: ${TRAITS[sun].strength}`, `약점: ${TRAITS[sun].weakness}`,
             ],
           },
+          ...connections(chart),
           {
             heading: '타고난 기질',
             paragraphs: [
@@ -139,7 +213,8 @@ export function buildDetail(card: CardData, chart: Chart): Detail {
           },
           // 가장 약한 원소라도 2개 이상이면 「약하다」고 하지 않는다
           ...(weak ? [{ heading: `${counts[weak] >= 2 ? '조금 덜 쓰는 원소' : '약한 원소 채우기'} · ${ELEMENT_KO[weak]}`, paragraphs: [GROWTH_ELEMENT[weak]] }] : []),
-          { heading: head('토성', saturn), paragraphs: [GROWTH_SATURN[saturn]] },
+          // 토성이 태양·달과 닿아 있으면 그 사실을 조언 앞에 먼저 적는다
+          { heading: head('토성', saturn), paragraphs: [...saturnTouches(chart).map((id) => SATURN_TOUCH[id]), GROWTH_SATURN[saturn]] },
           { heading: head('북쪽 노드', node), paragraphs: [GROWTH_NODE[node]] },
           { heading: head('달', moon), paragraphs: [GROWTH_MOON[moon]] },
           asc
