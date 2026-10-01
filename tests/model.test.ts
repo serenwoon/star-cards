@@ -61,6 +61,8 @@ describe('buildCards', () => {
     const el = cards[4];
     if (sum.kind !== 'summary' || el.kind !== 'elements') throw new Error();
     expect(sum.title).toBe('나는 이런 사람');
+    expect(sum.introParts).toEqual([`황소자리의 ${TRAITS.taurus.tags[0]}`, '염소자리의 마음', '처녀자리의 첫인상']);
+    expect(sum.intro).toBe(sum.introParts.join(', '));
     expect(sum.intro).toBe(`황소자리의 ${TRAITS.taurus.tags[0]}, 염소자리의 마음, 처녀자리의 첫인상`);
     expect(sum.elementLine).toBe(el.line);
     expect(sum.growthLine).toBe(NODE_LINE.aquarius);
@@ -69,6 +71,7 @@ describe('buildCards', () => {
     const cards = buildCards(unknown, null).cards;
     const sum = cards[cards.length - 1];
     if (sum.kind !== 'summary') throw new Error();
+    expect(sum.introParts).toEqual([`황소자리의 ${TRAITS.taurus.tags[0]}`, '염소자리의 마음']);
     expect(sum.intro).toBe(`황소자리의 ${TRAITS.taurus.tags[0]}, 염소자리의 마음`);
     expect(sum.intro).not.toContain('첫인상');
   });

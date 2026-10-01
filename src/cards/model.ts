@@ -19,7 +19,7 @@ export type CardData =
       saturn: { sign: SignRef; line: string } }
   | { kind: 'elements'; title: '원소 밸런스'; counts: Record<Element, number>; top: Element[]; line: string }
   | { kind: 'chart'; title: '출생 차트'; chart: Chart }
-  | { kind: 'summary'; title: '나는 이런 사람'; intro: string; elementLine: string; growthLine: string };
+  | { kind: 'summary'; title: '나는 이런 사람'; intro: string; introParts: string[]; elementLine: string; growthLine: string };
 export type CardSet = { element: Element; name: string | null; timeKnown: boolean; cards: CardData[] };
 
 export const ELEMENT_ORDER: Element[] = ['fire', 'earth', 'air', 'water'];
@@ -53,7 +53,7 @@ export function buildCards(chart: Chart, name: string | null): CardSet {
     : { label: '목성' as const, sign: ref(signOfBody('jupiter')), line: JUPITER_LINE[signOfBody('jupiter')] };
 
   const { counts, top, line: elementLine } = elementSummary(chart);
-  const intro = [`${SIGNS[sun].ko}의 ${TRAITS[sun].tags[0]}`, `${SIGNS[moon].ko}의 마음`, ...(asc ? [`${SIGNS[asc].ko}의 첫인상`] : [])].join(', ');
+  const introParts = [`${SIGNS[sun].ko}의 ${TRAITS[sun].tags[0]}`, `${SIGNS[moon].ko}의 마음`, ...(asc ? [`${SIGNS[asc].ko}의 첫인상`] : [])];
 
   const trimmed = name?.trim() ?? '';
   return {
@@ -69,7 +69,7 @@ export function buildCards(chart: Chart, name: string | null): CardSet {
       { kind: 'work', title: '일과 목표', primary, saturn: { sign: ref(saturn), line: SATURN_LINE[saturn] } },
       { kind: 'elements', title: '원소 밸런스', counts, top, line: elementLine },
       { kind: 'chart', title: '출생 차트', chart },
-      { kind: 'summary', title: '나는 이런 사람', intro, elementLine, growthLine: NODE_LINE[signOfBody('node')] },
+      { kind: 'summary', title: '나는 이런 사람', intro: introParts.join(', '), introParts, elementLine, growthLine: NODE_LINE[signOfBody('node')] },
     ],
   };
 }

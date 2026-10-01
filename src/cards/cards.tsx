@@ -91,7 +91,7 @@ function Content({ card }: { card: CardData }) {
     case 'chart':
       return <div className="wheel-wrap"><StaticWheel chart={card.chart} size={920} /></div>;
     case 'summary': {
-      const parts = card.intro.split(', ');
+      const parts = card.introParts;
       return (
         <>
         <div className="hero">

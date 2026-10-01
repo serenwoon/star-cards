@@ -158,7 +158,7 @@ describe('buildDetail', () => {
     const d = details(known).summary;
     const card = cardOf(known, 'summary');
     expect(d.title).toBe('나는 이런 사람');
-    expect(d.sections[0].heading).toBe('나는 이런 사람');
+    expect(d.sections[0].heading).toBe('한눈에 보기');
     expect(d.sections[0].paragraphs).toEqual([
       card.intro, NATAL.sun.taurus, NATAL.moon.capricorn, NATAL.asc.virgo,
       `강점: ${TRAITS.taurus.strength}`, `약점: ${TRAITS.taurus.weakness}`,
@@ -178,7 +178,7 @@ describe('buildDetail', () => {
     const d = details(known).summary;
     const heads = d.sections.map((s) => s.heading);
     expect(heads).toEqual([
-      '나는 이런 사람', '타고난 기질', '더 자랄 수 있는 방향',
+      '한눈에 보기', '타고난 기질', '더 자랄 수 있는 방향',
       '약한 원소 채우기 · 공기', '토성 · 염소자리', '북쪽 노드 · 물병자리', '달 · 염소자리', '상승궁 · 처녀자리',
     ]);
     const by = (h: string) => d.sections.find((s) => s.heading === h)!.paragraphs;
@@ -205,8 +205,28 @@ describe('buildDetail', () => {
     for (const chart of [known, unknown]) {
       const all = details(chart);
       const weakEl = all.elements.sections[all.elements.sections.length - 1].heading.replace('가장 약한 원소 · ', '');
-      expect(all.summary.sections.map((s) => s.heading)).toContain(`약한 원소 채우기 · ${weakEl}`);
+      const heads = all.summary.sections.map((s) => s.heading);
+      expect(heads.some((h) => h === `약한 원소 채우기 · ${weakEl}` || h === `조금 덜 쓰는 원소 · ${weakEl}`)).toBe(true);
     }
+  });
+
+  it('종합: 가장 약한 원소가 2개 이상이면 「조금 덜 쓰는 원소」, 1개 이하면 「약한 원소 채우기」', () => {
+    const LON = { fire: 15, earth: 45, air: 75, water: 105 } as const;
+    const withElements = (plan: (keyof typeof LON)[]) => {
+      const ids = known.bodies.filter((b) => b.id !== 'node');
+      return { ...known, bodies: known.bodies.map((b) => {
+        const i = ids.findIndex((x) => x.id === b.id);
+        return i < 0 ? b : { ...b, lon: LON[plan[i]] };
+      }) };
+    };
+    const mild = withElements(['fire', 'fire', 'fire', 'earth', 'earth', 'earth', 'air', 'air', 'water', 'water']);
+    const mildSec = details(mild).summary.sections.find((s) => s.heading.includes('원소 · '))!;
+    expect(mildSec.heading).toBe('조금 덜 쓰는 원소 · 공기');
+    expect(mildSec.paragraphs).toEqual([GROWTH_ELEMENT.air]);
+    const thin = withElements(['fire', 'fire', 'fire', 'fire', 'earth', 'earth', 'earth', 'air', 'air', 'water']);
+    const heads = details(thin).summary.sections.map((s) => s.heading);
+    expect(heads).toContain('약한 원소 채우기 · 물');
+    expect(heads.some((h) => h.startsWith('조금 덜 쓰는 원소'))).toBe(false);
   });
 
   it('개인정보: 생년월일·시각·도시·UTC·이름이 들어가지 않는다', () => {

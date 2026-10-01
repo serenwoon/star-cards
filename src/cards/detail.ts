@@ -120,7 +120,7 @@ export function buildDetail(card: CardData, chart: Chart): Detail {
         title,
         sections: [
           {
-            heading: '나는 이런 사람',
+            heading: '한눈에 보기',
             paragraphs: [
               card.intro, NATAL.sun[sun], NATAL.moon[moon], ...(asc ? [NATAL.asc[asc]] : []),
               `강점: ${TRAITS[sun].strength}`, `약점: ${TRAITS[sun].weakness}`,
@@ -137,7 +137,8 @@ export function buildDetail(card: CardData, chart: Chart): Detail {
             heading: '더 자랄 수 있는 방향',
             paragraphs: ['차트에서 덜 쓰는 쪽과 힘이 들어가는 자리를 보고 고른 제안입니다. 정해진 답이 아니라 해 볼 만한 연습으로 읽으면 됩니다.'],
           },
-          ...(weak ? [{ heading: `약한 원소 채우기 · ${ELEMENT_KO[weak]}`, paragraphs: [GROWTH_ELEMENT[weak]] }] : []),
+          // 가장 약한 원소라도 2개 이상이면 「약하다」고 하지 않는다
+          ...(weak ? [{ heading: `${counts[weak] >= 2 ? '조금 덜 쓰는 원소' : '약한 원소 채우기'} · ${ELEMENT_KO[weak]}`, paragraphs: [GROWTH_ELEMENT[weak]] }] : []),
           { heading: head('토성', saturn), paragraphs: [GROWTH_SATURN[saturn]] },
           { heading: head('북쪽 노드', node), paragraphs: [GROWTH_NODE[node]] },
           { heading: head('달', moon), paragraphs: [GROWTH_MOON[moon]] },
