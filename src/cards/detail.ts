@@ -8,7 +8,9 @@ import { HOUSES } from '../content/houses';
 import { NATAL } from '../content/natal';
 import { placementText, ascText, aspectText } from '../content/interpret';
 import { ELEMENT_DETAIL } from '../content/cards/elementDetail';
-import { ELEMENT_ORDER, type CardData } from './model';
+import { GROWTH_ELEMENT, GROWTH_SATURN, GROWTH_NODE, GROWTH_MOON, GROWTH_ASC } from '../content/cards/growth';
+import { TRAITS } from '../content/cards/traits';
+import { ELEMENT_ORDER, elementSummary, weakestElement, type CardData } from './model';
 
 export type DetailSection = { heading: string; paragraphs: string[]; rows?: string[][]; columns?: string[] };
 export type Detail = { title: string; sections: DetailSection[] };
@@ -102,13 +104,48 @@ export function buildDetail(card: CardData, chart: Chart): Detail {
         heading: `가장 강한 원소 · ${top.map((e) => ELEMENT_KO[e]).join('·')}`,
         paragraphs: [card.line, ...top.map((e) => ELEMENT_DETAIL[e])],
       });
-      // 가장 약한 원소: top 밖에서 가장 적은 것, 같으면 불→흙→공기→물 순서로 앞
-      const rest = ELEMENT_ORDER.filter((e) => !card.top.includes(e));
-      if (rest.length) {
-        const weak = rest.reduce((a, b) => (card.counts[b] < card.counts[a] ? b : a));
-        sections.push({ heading: `가장 약한 원소 · ${ELEMENT_KO[weak]}`, paragraphs: [ELEMENT_DETAIL[weak]] });
-      }
+      const weak = weakestElement(card.counts, card.top);
+      if (weak) sections.push({ heading: `가장 약한 원소 · ${ELEMENT_KO[weak]}`, paragraphs: [ELEMENT_DETAIL[weak]] });
       return { title, sections };
+    }
+    case 'summary': {
+      const sun = signOf(lonOf(chart, 'sun'));
+      const moon = signOf(lonOf(chart, 'moon'));
+      const asc = chart.houses ? signOf(chart.houses.asc) : null;
+      const saturn = signOf(lonOf(chart, 'saturn'));
+      const node = signOf(lonOf(chart, 'node'));
+      const { counts, top } = elementSummary(chart);
+      const weak = weakestElement(counts, top);
+      return {
+        title,
+        sections: [
+          {
+            heading: '나는 이런 사람',
+            paragraphs: [
+              card.intro, NATAL.sun[sun], NATAL.moon[moon], ...(asc ? [NATAL.asc[asc]] : []),
+              `강점: ${TRAITS[sun].strength}`, `약점: ${TRAITS[sun].weakness}`,
+            ],
+          },
+          {
+            heading: '타고난 기질',
+            paragraphs: [
+              ELEMENT_ORDER.map((e) => `${ELEMENT_KO[e]} ${counts[e]}`).join(' · '),
+              ...top.slice(0, 2).map((e) => ELEMENT_DETAIL[e]),
+            ],
+          },
+          {
+            heading: '더 자랄 수 있는 방향',
+            paragraphs: ['차트에서 덜 쓰는 쪽과 힘이 들어가는 자리를 보고 고른 제안입니다. 정해진 답이 아니라 해 볼 만한 연습으로 읽으면 됩니다.'],
+          },
+          ...(weak ? [{ heading: `약한 원소 채우기 · ${ELEMENT_KO[weak]}`, paragraphs: [GROWTH_ELEMENT[weak]] }] : []),
+          { heading: head('토성', saturn), paragraphs: [GROWTH_SATURN[saturn]] },
+          { heading: head('북쪽 노드', node), paragraphs: [GROWTH_NODE[node]] },
+          { heading: head('달', moon), paragraphs: [GROWTH_MOON[moon]] },
+          asc
+            ? { heading: head('상승궁', asc), paragraphs: [GROWTH_ASC[asc]] }
+            : { heading: '상승궁', paragraphs: ['태어난 시각을 넣으면 상승궁 조언이 나옵니다.'] },
+        ],
+      };
     }
     case 'chart': {
       const rows = chart.bodies.map((b) => {

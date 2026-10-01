@@ -90,6 +90,22 @@ function Content({ card }: { card: CardData }) {
       );
     case 'chart':
       return <div className="wheel-wrap"><StaticWheel chart={card.chart} size={920} /></div>;
+    case 'summary': {
+      const parts = card.intro.split(', ');
+      return (
+        <>
+        <div className="hero">
+          <p className="hero-name intro">
+            {parts.map((p, i) => <span key={p}>{p}{i < parts.length - 1 ? ',' : ''}</span>)}
+          </p>
+        </div>
+        <div className="panel">
+          <p className="kicker">타고난 기질</p><p className="line">{card.elementLine}</p>
+          <p className="kicker">자라는 방향</p><p className="line">{card.growthLine}</p>
+        </div>
+        </>
+      );
+    }
   }
 }
 

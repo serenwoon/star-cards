@@ -4,6 +4,8 @@ import { buildCards } from '../src/cards/model';
 import { buildDetail, type Detail } from '../src/cards/detail';
 import { NATAL } from '../src/content/natal';
 import { ELEMENT_DETAIL } from '../src/content/cards/elementDetail';
+import { GROWTH_ELEMENT, GROWTH_SATURN, GROWTH_NODE, GROWTH_MOON, GROWTH_ASC } from '../src/content/cards/growth';
+import { TRAITS } from '../src/content/cards/traits';
 import { SIGNS } from '../src/content/signs';
 import { HOUSES } from '../src/content/houses';
 import { PLANETS } from '../src/content/planets';
@@ -23,10 +25,10 @@ const cardOf = <K extends CardData['kind']>(chart: typeof known, kind: K) =>
 const text = (d: Detail) => [d.title, ...d.sections.flatMap((s) => [s.heading, ...s.paragraphs, ...(s.rows ?? []).flat()])].join('\n');
 
 describe('buildDetail', () => {
-  it('카드 6종 모두 해설이 비어 있지 않다', () => {
+  it('카드 7종 모두 해설이 비어 있지 않다', () => {
     for (const chart of [known, unknown]) {
       const all = details(chart);
-      expect(Object.keys(all)).toHaveLength(6);
+      expect(Object.keys(all)).toHaveLength(7);
       for (const d of Object.values(all)) {
         expect(d.title.length).toBeGreaterThan(0);
         expect(d.sections.length).toBeGreaterThan(0);
@@ -152,9 +154,65 @@ describe('buildDetail', () => {
     expect(last.paragraphs).toEqual([ELEMENT_DETAIL.air]);
   });
 
+  it('종합: 첫 섹션은 한 줄 소개와 태양·달·상승궁 해설, 강점·약점', () => {
+    const d = details(known).summary;
+    const card = cardOf(known, 'summary');
+    expect(d.title).toBe('나는 이런 사람');
+    expect(d.sections[0].heading).toBe('나는 이런 사람');
+    expect(d.sections[0].paragraphs).toEqual([
+      card.intro, NATAL.sun.taurus, NATAL.moon.capricorn, NATAL.asc.virgo,
+      `강점: ${TRAITS.taurus.strength}`, `약점: ${TRAITS.taurus.weakness}`,
+    ]);
+  });
+
+  it('종합: 타고난 기질은 원소 개수 한 줄과 가장 강한 원소 설명', () => {
+    const d = details(known).summary;
+    const el = cardOf(known, 'elements');
+    const sec = d.sections[1];
+    expect(sec.heading).toBe('타고난 기질');
+    expect(sec.paragraphs[0]).toBe(`불 ${el.counts.fire} · 흙 ${el.counts.earth} · 공기 ${el.counts.air} · 물 ${el.counts.water}`);
+    expect(sec.paragraphs.slice(1)).toEqual(el.top.slice(0, 2).map((e) => ELEMENT_DETAIL[e]));
+  });
+
+  it('종합: 더 자랄 수 있는 방향 다섯 갈래(서울 1990)', () => {
+    const d = details(known).summary;
+    const heads = d.sections.map((s) => s.heading);
+    expect(heads).toEqual([
+      '나는 이런 사람', '타고난 기질', '더 자랄 수 있는 방향',
+      '약한 원소 채우기 · 공기', '토성 · 염소자리', '북쪽 노드 · 물병자리', '달 · 염소자리', '상승궁 · 처녀자리',
+    ]);
+    const by = (h: string) => d.sections.find((s) => s.heading === h)!.paragraphs;
+    expect(by('약한 원소 채우기 · 공기')).toEqual([GROWTH_ELEMENT.air]);
+    expect(by('토성 · 염소자리')).toEqual([GROWTH_SATURN.capricorn]);
+    expect(by('북쪽 노드 · 물병자리')).toEqual([GROWTH_NODE.aquarius]);
+    expect(by('달 · 염소자리')).toEqual([GROWTH_MOON.capricorn]);
+    expect(by('상승궁 · 처녀자리')).toEqual([GROWTH_ASC.virgo]);
+  });
+
+  it('종합: 시각 모름이면 상승궁 해설·조언 대신 안내 한 줄', () => {
+    const d = details(unknown).summary;
+    const all = text(d);
+    expect(cardOf(unknown, 'summary').intro).not.toContain('첫인상');
+    expect(all).not.toContain('첫인상');
+    expect(d.sections[0].paragraphs).toHaveLength(5);
+    const last = d.sections[d.sections.length - 1];
+    expect(last.heading).toBe('상승궁');
+    expect(last.paragraphs).toEqual(['태어난 시각을 넣으면 상승궁 조언이 나옵니다.']);
+    for (const p of Object.values(GROWTH_ASC)) expect(all).not.toContain(p);
+  });
+
+  it('종합: 약한 원소는 원소 카드 해설과 같은 원소를 고른다', () => {
+    for (const chart of [known, unknown]) {
+      const all = details(chart);
+      const weakEl = all.elements.sections[all.elements.sections.length - 1].heading.replace('가장 약한 원소 · ', '');
+      expect(all.summary.sections.map((s) => s.heading)).toContain(`약한 원소 채우기 · ${weakEl}`);
+    }
+  });
+
   it('개인정보: 생년월일·시각·도시·UTC·이름이 들어가지 않는다', () => {
     const bads = ['1990', '05-15', '5월 15일', '14:30', '14시', '오후 2', '서울', 'Seoul', 'UTC', '홍길동'];
     for (const chart of [known, unknown]) {
+      expect(Object.keys(details(chart, '홍길동'))).toHaveLength(7);
       for (const d of Object.values(details(chart, '홍길동'))) {
         const all = text(d);
         for (const bad of bads) expect(all).not.toContain(bad);

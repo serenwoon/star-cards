@@ -11,6 +11,8 @@
 .card-foot { display: flex; justify-content: space-between; gap: 24px; font-size: 36px; font-weight: 600; opacity: .7; }
 .hero { text-align: center; }
 .hero-name.xl { font-size: 140px; line-height: 1.1; }
+.hero-name.intro { line-height: 1.45; }
+.hero-name.intro span { display: block; }
 .glyph.pair { display: block; font-size: 180px; line-height: 1.05; margin: 0; }
 .card-foot > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .card-foot .brand { flex: none; }

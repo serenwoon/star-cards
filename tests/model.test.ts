@@ -4,6 +4,8 @@ import { buildCards } from '../src/cards/model';
 import { SUN_LINE, ASC_LINE } from '../src/content/cards/big3';
 import { JUPITER_LINE, MC_LINE } from '../src/content/cards/lines';
 import { tieLine } from '../src/content/cards/elements';
+import { NODE_LINE } from '../src/content/cards/growth';
+import { TRAITS } from '../src/content/cards/traits';
 import type { Element } from '../src/astro/zodiac';
 
 const seoul = { lat: 37.5665, lon: 126.978, tz: 'Asia/Seoul', system: 'placidus' as const };
@@ -11,9 +13,9 @@ const known = computeChart({ date: '1990-05-15', time: '14:30', ...seoul });
 const unknown = computeChart({ date: '1990-05-15', time: null, ...seoul });
 
 describe('buildCards', () => {
-  it('카드 6장, 순서 고정', () => {
+  it('카드 7장, 순서 고정', () => {
     const set = buildCards(known, '나');
-    expect(set.cards.map((c) => c.kind)).toEqual(['big3', 'traits', 'love', 'work', 'elements', 'chart']);
+    expect(set.cards.map((c) => c.kind)).toEqual(['big3', 'traits', 'love', 'work', 'elements', 'chart', 'summary']);
     expect(set.name).toBe('나');
   });
   it('서울 1990: 태양 황소, 달 염소, 상승궁 처녀(Swiss Ephemeris 기준값)', () => {
@@ -53,6 +55,23 @@ describe('buildCards', () => {
     const max = Math.max(...Object.values(el.counts));
     el.top.forEach((e) => expect(el.counts[e]).toBe(max));
   });
+  it('종합: 서울 1990은 황소·염소·처녀, 북쪽 노드 물병자리', () => {
+    const cards = buildCards(known, null).cards;
+    const sum = cards[cards.length - 1];
+    const el = cards[4];
+    if (sum.kind !== 'summary' || el.kind !== 'elements') throw new Error();
+    expect(sum.title).toBe('나는 이런 사람');
+    expect(sum.intro).toBe(`황소자리의 ${TRAITS.taurus.tags[0]}, 염소자리의 마음, 처녀자리의 첫인상`);
+    expect(sum.elementLine).toBe(el.line);
+    expect(sum.growthLine).toBe(NODE_LINE.aquarius);
+  });
+  it('종합: 시각 모름이면 첫인상 구절이 없다', () => {
+    const cards = buildCards(unknown, null).cards;
+    const sum = cards[cards.length - 1];
+    if (sum.kind !== 'summary') throw new Error();
+    expect(sum.intro).toBe(`황소자리의 ${TRAITS.taurus.tags[0]}, 염소자리의 마음`);
+    expect(sum.intro).not.toContain('첫인상');
+  });
   it('이름이 빈 문자열이면 null', () => {
     expect(buildCards(known, '  ').name).toBeNull();
   });
@@ -79,6 +98,9 @@ describe('원소 동점', () => {
     expect(el.top).toEqual(['fire', 'earth']);
     expect(el.line).toBe(tieLine('fire', 'earth'));
     expect(el.line).toBe('불과 흙이 비슷하게 강해요');
+    const sum = buildCards(chart, null).cards[6];
+    if (sum.kind !== 'summary') throw new Error();
+    expect(sum.elementLine).toBe('불과 흙이 비슷하게 강해요');
   });
   it('3자 동점: 불·공기·물 3 / 흙 1 → 문구는 앞 둘만', () => {
     const chart = withElements([...rep('fire', 3), ...rep('air', 3), ...rep('water', 3), 'earth']);

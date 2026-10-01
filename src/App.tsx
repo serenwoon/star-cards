@@ -92,6 +92,7 @@ export default function App() {
     }
   }
   const shareAll = canShareFiles();
+  const count = set ? `${set.cardSet.cards.length}장` : '';
   const onCardNode = useCallback((i: number, el: HTMLDivElement | null) => { nodes.current[i] = el; }, []);
 
   return (
@@ -109,7 +110,7 @@ export default function App() {
       {set && (
         <div className="deck-tools">
           <button type="button" disabled={all === 'busy'} aria-busy={all === 'busy'} onClick={saveAll}>
-            {all === 'busy' ? '만드는 중…' : readyFiles ? '준비됐어요 · 눌러서 6장 공유' : shareAll ? '6장 모두 공유' : '6장 모두 저장'}
+            {all === 'busy' ? '만드는 중…' : readyFiles ? `준비됐어요 · 눌러서 ${count} 공유` : shareAll ? `${count} 모두 공유` : `${count} 모두 저장`}
           </button>
           {all === 'error' && <span className="err" role="alert">저장하지 못했어요</span>}
         </div>

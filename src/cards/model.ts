@@ -7,6 +7,7 @@ import { SUN_LINE, MOON_LINE, ASC_LINE } from '../content/cards/big3';
 import { TRAITS } from '../content/cards/traits';
 import { VENUS_LINE, MARS_LINE, MC_LINE, SATURN_LINE, JUPITER_LINE } from '../content/cards/lines';
 import { ELEMENT_LINE, tieLine } from '../content/cards/elements';
+import { NODE_LINE } from '../content/cards/growth';
 
 export type SignRef = { id: SignId; ko: string; glyph: string };
 export type CardData =
@@ -17,12 +18,27 @@ export type CardData =
   | { kind: 'work'; title: '일과 목표'; primary: { label: 'MC' | '목성'; sign: SignRef; line: string };
       saturn: { sign: SignRef; line: string } }
   | { kind: 'elements'; title: '원소 밸런스'; counts: Record<Element, number>; top: Element[]; line: string }
-  | { kind: 'chart'; title: '출생 차트'; chart: Chart };
+  | { kind: 'chart'; title: '출생 차트'; chart: Chart }
+  | { kind: 'summary'; title: '나는 이런 사람'; intro: string; elementLine: string; growthLine: string };
 export type CardSet = { element: Element; name: string | null; timeKnown: boolean; cards: CardData[] };
 
 export const ELEMENT_ORDER: Element[] = ['fire', 'earth', 'air', 'water'];
 
 const ref = (id: SignId): SignRef => ({ id, ko: SIGNS[id].ko, glyph: SIGNS[id].glyph });
+
+/** 원소 개수, 가장 많은 원소들(불→흙→공기→물 순), 카드에 적는 한 줄 */
+export function elementSummary(chart: Chart): { counts: Record<Element, number>; top: Element[]; line: string } {
+  const counts = balance(chart.bodies).element;
+  const max = Math.max(...ELEMENT_ORDER.map((e) => counts[e]));
+  const top = ELEMENT_ORDER.filter((e) => counts[e] === max);
+  return { counts, top, line: top.length === 1 ? ELEMENT_LINE[top[0]] : tieLine(top[0], top[1]) };
+}
+
+/** 가장 약한 원소: top 밖에서 가장 적은 것, 같으면 불→흙→공기→물 순서로 앞. top이 넷 다면 null. */
+export function weakestElement(counts: Record<Element, number>, top: Element[]): Element | null {
+  const rest = ELEMENT_ORDER.filter((e) => !top.includes(e));
+  return rest.length ? rest.reduce((a, b) => (counts[b] < counts[a] ? b : a)) : null;
+}
 
 export function buildCards(chart: Chart, name: string | null): CardSet {
   const signOfBody = (id: BodyId) => signOf(chart.bodies.find((b) => b.id === id)!.lon);
@@ -36,10 +52,8 @@ export function buildCards(chart: Chart, name: string | null): CardSet {
     ? { label: 'MC' as const, sign: ref(signOf(chart.houses.mc)), line: MC_LINE[signOf(chart.houses.mc)] }
     : { label: '목성' as const, sign: ref(signOfBody('jupiter')), line: JUPITER_LINE[signOfBody('jupiter')] };
 
-  const counts = balance(chart.bodies).element;
-  const max = Math.max(...ELEMENT_ORDER.map((e) => counts[e]));
-  const top = ELEMENT_ORDER.filter((e) => counts[e] === max);
-  const elementLine = top.length === 1 ? ELEMENT_LINE[top[0]] : tieLine(top[0], top[1]);
+  const { counts, top, line: elementLine } = elementSummary(chart);
+  const intro = [`${SIGNS[sun].ko}의 ${TRAITS[sun].tags[0]}`, `${SIGNS[moon].ko}의 마음`, ...(asc ? [`${SIGNS[asc].ko}의 첫인상`] : [])].join(', ');
 
   const trimmed = name?.trim() ?? '';
   return {
@@ -55,6 +69,7 @@ export function buildCards(chart: Chart, name: string | null): CardSet {
       { kind: 'work', title: '일과 목표', primary, saturn: { sign: ref(saturn), line: SATURN_LINE[saturn] } },
       { kind: 'elements', title: '원소 밸런스', counts, top, line: elementLine },
       { kind: 'chart', title: '출생 차트', chart },
+      { kind: 'summary', title: '나는 이런 사람', intro, elementLine, growthLine: NODE_LINE[signOfBody('node')] },
     ],
   };
 }
