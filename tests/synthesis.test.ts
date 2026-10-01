@@ -91,8 +91,13 @@ describe('연결 해석 문구', () => {
     expect(SATURN_TOUCH.both).toContain('태양·달 모두');
   });
 
-  it('충 문단은 결이 통하는 원소끼리라는 점을 먼저 짚는다', () => {
-    expect(SUN_MOON_ASPECT.opposition).toContain('결이 통하는 사이라도');
+  it('충 문단은 원소가 통하든 엇갈리든 맞게 읽힌다(별자리를 넘는 충도 있다)', () => {
+    expect(SUN_MOON_ASPECT.opposition).not.toContain('결이 통하는 사이라도');
+    expect(SUN_MOON_ASPECT.opposition).toContain('원소의 결이 통하든 엇갈리든');
+  });
+
+  it('43문단과 토성 문장은 해요체를 섞지 않는다', () => {
+    [...paragraphs(), ...touches()].forEach((p) => expect(/(세요|어요|아요|해요|예요)\./.test(p), p).toBe(false));
   });
 });
 

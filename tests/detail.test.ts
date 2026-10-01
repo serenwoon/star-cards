@@ -207,7 +207,7 @@ describe('buildDetail', () => {
       '움직이는 방식 · 활동',
       '끌림과 다가가는 방식 · 금성 불 × 화성 물',
       '차트를 이끄는 행성 · 수성',
-      '가장 강하게 이어진 세 가지',
+      '그 밖에 강하게 이어진 세 가지',
       '타고난 기질', '더 자랄 수 있는 방향',
       '약한 원소 채우기 · 공기', '토성 · 염소자리', '북쪽 노드 · 물병자리', '달 · 염소자리', '상승궁 · 처녀자리',
     ]);
@@ -227,7 +227,7 @@ describe('buildDetail', () => {
     expect(by('차트를 이끄는 행성')).toEqual([
       '상승궁의 지배 행성은 수성입니다. 차트 전체의 방향을 잡는 행성으로 읽습니다.', ...placementText('mercury', 'taurus', 8),
     ]);
-    const top = by('가장 강하게 이어진 세 가지');
+    const top = by('그 밖에 강하게 이어진 세 가지');
     expect(top).toHaveLength(3);
     expect(top).toEqual(tightestAspects(known, 3, sunMoonHit(known)).map((a) => aspectText(a, { mode: 'natal' })));
     // 태양–달 각도는 바로 위 섹션에 이미 나왔으니 여기서는 되풀이하지 않는다
@@ -243,7 +243,7 @@ describe('buildDetail', () => {
       '안에서 맞는가, 부딪치는가 · 태양과 달 삼분',
       '움직이는 방식 · 활동',
       '끌림과 다가가는 방식 · 금성 불 × 화성 물',
-      '가장 강하게 이어진 세 가지',
+      '그 밖에 강하게 이어진 세 가지',
       '타고난 기질',
     ]);
     expect(heads.some((h) => /^(겉모습과 실제|삶의 무게중심|태양이 놓인 자리|차트를 이끄는 행성)/.test(h))).toBe(false);
@@ -251,18 +251,18 @@ describe('buildDetail', () => {
     expect(all).not.toContain('지배 행성');
     for (const p of [...Object.values(ASC_SUN), ...HOUSE_FOCUS]) expect(all).not.toContain(p);
     expect(d.sections.find((s) => s.heading.startsWith('끌림과 다가가는 방식'))!.paragraphs).toEqual([VENUS_MARS.cross]);
-    expect(d.sections.find((s) => s.heading === '가장 강하게 이어진 세 가지')!.paragraphs).toHaveLength(3);
+    expect(d.sections.find((s) => s.heading === '그 밖에 강하게 이어진 세 가지')!.paragraphs).toHaveLength(3);
   });
 
   it('종합: 시각 모름이면 달이 낀 각도 앞에 참고 안내를 붙인다', () => {
-    const CAVEAT = '태어난 시각을 모르면 달의 위치가 몇 도 달라질 수 있어, 달이 낀 각도는 참고로만 봐 주세요.';
+    const CAVEAT = '태어난 시각을 모르면 달의 위치가 몇 도 달라질 수 있어, 달이 낀 각도는 참고로만 보는 편이 좋습니다.';
     const sec = (chart: typeof known, h: string) => details(chart).summary.sections.find((s) => s.heading.startsWith(h))!.paragraphs;
     const hit = sunMoonHit(unknown)!;
     expect(sec(unknown, '안에서 맞는가')).toEqual([CAVEAT, SUN_MOON_ASPECT.trine, aspectText(hit, { mode: 'natal' })]);
     // 서울 1990 시각 모름의 가장 강한 셋에는 달이 없어 안내가 붙지 않는다
-    expect(sec(unknown, '가장 강하게 이어진 세 가지')).not.toContain(CAVEAT);
+    expect(sec(unknown, '그 밖에 강하게 이어진 세 가지')).not.toContain(CAVEAT);
     const moonTop = { ...unknown, aspects: [{ a: 'moon' as const, b: 'venus' as const, type: 'trine' as const, orb: 0.1 }, ...unknown.aspects] };
-    const top = sec(moonTop, '가장 강하게 이어진 세 가지');
+    const top = sec(moonTop, '그 밖에 강하게 이어진 세 가지');
     expect(top).toHaveLength(4);
     expect(top[0]).toBe(CAVEAT);
     // 시각을 알면 어디에도 붙지 않는다
@@ -312,6 +312,20 @@ describe('buildDetail', () => {
     expect(by('움직이는 방식').heading).toBe('움직이는 방식 · 활동·고정');
     expect(by('움직이는 방식').paragraphs).toEqual(['활동 4 · 고정 4 · 변통 2', MODALITY_FOCUS.cardinal, MODALITY_FOCUS.fixed]);
     expect(by('토성 · ').paragraphs).toEqual([GROWTH_SATURN.gemini]);
+    // 태양–달 각도가 없으면 건너뛴 것이 없으니 제목은 「가장 강하게」 그대로다
+    const heads = d.sections.map((s) => s.heading);
+    expect(heads).toContain('가장 강하게 이어진 세 가지');
+    expect(heads).not.toContain('그 밖에 강하게 이어진 세 가지');
+  });
+
+  it('종합: 각도가 태양–달 하나뿐이거나 하나도 없을 때의 문구', () => {
+    const last = (chart: typeof known) => details(chart).summary.sections.find((s) => s.heading.endsWith('강하게 이어진 세 가지'))!;
+    const only = last({ ...known, aspects: [sunMoonHit(known)!] });
+    expect(only.heading).toBe('그 밖에 강하게 이어진 세 가지');
+    expect(only.paragraphs).toEqual(['태양과 달 말고는 주요 각도가 없습니다.']);
+    const none = last({ ...known, aspects: [] });
+    expect(none.heading).toBe('가장 강하게 이어진 세 가지');
+    expect(none.paragraphs).toEqual(['주요 각도가 없습니다.']);
   });
 
   it('종합: 시각 모름이면 상승궁 해설·조언 대신 안내 한 줄', () => {

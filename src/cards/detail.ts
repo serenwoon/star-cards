@@ -51,7 +51,7 @@ function saturnLead(chart: Chart): string[] {
   return touched.map((id) => SATURN_TOUCH[id]);
 }
 
-const MOON_CAVEAT = '태어난 시각을 모르면 달의 위치가 몇 도 달라질 수 있어, 달이 낀 각도는 참고로만 봐 주세요.';
+const MOON_CAVEAT = '태어난 시각을 모르면 달의 위치가 몇 도 달라질 수 있어, 달이 낀 각도는 참고로만 보는 편이 좋습니다.';
 
 /** 종합 긴 글의 연결 해석: 배치 하나씩이 아니라 둘 이상이 만나서 생기는 결을 읽는다. */
 function connections(chart: Chart): DetailSection[] {
@@ -131,10 +131,11 @@ function connections(chart: Chart): DetailSection[] {
   const top = tightestAspects(chart, 3, hit);
   const moonInTop = top.some((a) => a.a === 'moon' || a.b === 'moon');
   out.push({
-    heading: '가장 강하게 이어진 세 가지',
+    // 태양–달을 건너뛰었으면 「가장」이 아니라 「그 밖에」다
+    heading: hit ? '그 밖에 강하게 이어진 세 가지' : '가장 강하게 이어진 세 가지',
     paragraphs: top.length
       ? [...(!chart.houses && moonInTop ? [MOON_CAVEAT] : []), ...top.map((a) => aspectText(a, { mode: 'natal' }))]
-      : ['주요 각도가 없습니다.'],
+      : [hit ? '태양과 달 말고는 주요 각도가 없습니다.' : '주요 각도가 없습니다.'],
   });
   return out;
 }
